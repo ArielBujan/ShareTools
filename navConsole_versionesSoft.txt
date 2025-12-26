@@ -1,0 +1,253 @@
+(async function () {
+
+  // ======================================================
+  //  Helpers
+  // ======================================================
+
+  const results = {};
+
+  const add = (key, value, comment) => {
+    if (value === undefined || value === null || value === '') return false;
+
+    const normalized =
+      typeof value === 'string' || typeof value === 'number'
+        ? value
+        : value?.version ||
+          value?.VERSION ||
+          value?.versions ||
+          JSON.stringify(value);
+
+    results[key] = normalized;
+
+    console.log(
+      `%c${key}%c → %c${normalized}%c  // ${comment}`,
+      'color:#4ea1ff;font-weight:bold',
+      'color:inherit',
+      'color:#00c853;font-weight:bold',
+      'color:inherit'
+    );
+    return true;
+  };
+
+  const safe = (fn, fallback = undefined) => {
+    try { return fn(); } catch { return fallback; }
+  };
+
+  const scanList = (items, label) => {
+    console.groupCollapsed(`%c🔍 ${label}`, 'color:#ff9800; font-weight:bold;');
+    for (const { key, getter, comment } of items) {
+      add(key, safe(getter), comment);
+    }
+    console.groupEnd();
+  };
+
+  // ======================================================
+  //  DEFINICIÓN DE CATEGORÍAS BASE
+  // ======================================================
+
+  const CATEGORIES = {
+
+    jQuery: [
+      { key: 'jquery', getter: () => $.fn?.jquery, comment: 'jQuery' },
+      { key: 'jquery_alt', getter: () => window.jQuery?.().jquery, comment: 'jQuery (alt)' },
+      { key: 'jquery_ui', getter: () => $.ui?.version, comment: 'jQuery UI' },
+      { key: 'bootstrap_tooltip', getter: () => $.fn.tooltip?.Constructor?.VERSION, comment: 'Bootstrap tooltip' },
+      { key: 'datatables', getter: () => $.fn.dataTable?.version, comment: 'DataTables' },
+      { key: 'jquery_validation', getter: () => $.validator?.version, comment: 'jQuery Validation' },
+      { key: 'select2', getter: () => $.fn.select2?.version, comment: 'Select2' },
+      { key: 'chosen', getter: () => $.fn.chosen?.version, comment: 'Chosen' },
+      { key: 'jquery_migrate', getter: () => jQuery?.migrateVersion, comment: 'jQuery Migrate' },
+    ],
+
+    Frameworks: [
+      { key: 'angularjs', getter: () => angular?.version?.full, comment: 'AngularJS 1.x' },
+      {
+        key: 'angular_attr',
+        getter: () => document.querySelector('[ng-version]')?.getAttribute('ng-version'),
+        comment: 'Angular 2+ (ng-version)'
+      },
+      { key: 'react', getter: () => React?.version, comment: 'React' },
+      { key: 'vue', getter: () => Vue?.version, comment: 'Vue.js' },
+      { key: 'preact', getter: () => preact?.version, comment: 'Preact' },
+      { key: 'svelte', getter: () => window.__svelte?.version, comment: 'Svelte' },
+      { key: 'ember', getter: () => Ember?.VERSION, comment: 'Ember.js' },
+      { key: 'backbone', getter: () => Backbone?.VERSION, comment: 'Backbone.js' },
+      { key: 'moment', getter: () => moment?.version, comment: 'Moment.js' },
+      { key: 'dayjs', getter: () => dayjs?.version, comment: 'Day.js' },
+      { key: 'knockout', getter: () => ko?.version, comment: 'Knockout.js' },
+      { key: 'lodash', getter: () => _?.VERSION, comment: 'Lodash / Underscore' },
+      { key: 'modernizr', getter: () => Modernizr?._version, comment: 'Modernizr' },
+    ],
+
+    Charts: [
+      { key: 'chartjs', getter: () => Chart?.version || Chart?.VERSION, comment: 'Chart.js' },
+      { key: 'd3', getter: () => d3?.version, comment: 'D3.js' },
+      { key: 'highcharts', getter: () => Highcharts?.version, comment: 'Highcharts' },
+      { key: 'echarts', getter: () => echarts?.version, comment: 'ECharts' },
+      { key: 'apexcharts', getter: () => ApexCharts?.version, comment: 'ApexCharts' },
+      { key: 'cytoscape', getter: () => cytoscape?.version, comment: 'Cytoscape.js' },
+      { key: 'zingchart', getter: () => zingchart?.version, comment: 'ZingChart' },
+    ],
+
+    UI_Libs: [
+      { key: 'bootstrap5_tooltip', getter: () => bootstrap?.Tooltip?.VERSION, comment: 'Bootstrap 5 Tooltip' },
+      { key: 'bootstrap5_modal', getter: () => bootstrap?.Modal?.VERSION, comment: 'Bootstrap 5 Modal' },
+      { key: 'extjs', getter: () => Ext?.getVersion?.().version, comment: 'ExtJS' },
+      { key: 'kendo', getter: () => kendo?.version, comment: 'Kendo UI' },
+      { key: 'foundation', getter: () => Foundation?.version, comment: 'Foundation' },
+      { key: 'materialize', getter: () => M?.version || Materialize?.version, comment: 'Materialize' },
+      { key: 'semantic_ui', getter: () => Semantic?.version, comment: 'Semantic UI' },
+      { key: 'uikit', getter: () => UIkit?.version, comment: 'UIkit' },
+      { key: 'bulma', getter: () => window.bulma?.version, comment: 'Bulma' }
+    ]
+  };
+
+  // ======================================================
+  //  EJECUTAR CATEGORÍAS BASE
+  // ======================================================
+  for (const [category, items] of Object.entries(CATEGORIES)) {
+    scanList(items, category);
+  }
+
+  // ======================================================
+  //  TECNOLOGÍAS ADICIONALES
+  // ======================================================
+
+  console.groupCollapsed('%c🔍 Tecnologías adicionales', 'color:#ff9800;font-weight:bold');
+
+  [
+    // Modern-Web
+    { key: 'htmx', getter: () => htmx?.version, comment: 'HTMX' },
+    { key: 'stimulus', getter: () => Stimulus?.version, comment: 'StimulusJS' },
+
+    // Tiempo real
+    { key: 'socket_io', getter: () => io?.version, comment: 'Socket.IO' },
+    { key: 'signalr', getter: () => signalR?.VERSION, comment: 'SignalR legacy' },
+    { key: 'signalr_core', getter: () => window.signalR?.HubConnectionBuilder ? 'detected' : undefined, comment: 'SignalR Core' },
+
+    // HTTP
+    { key: 'axios', getter: () => axios?.VERSION, comment: 'Axios' },
+    { key: 'superagent', getter: () => superagent?.VERSION, comment: 'SuperAgent' },
+
+    // Editores
+    { key: 'tinymce', getter: () => tinymce?.majorVersion + '.' + tinymce?.minorVersion, comment: 'TinyMCE' },
+    { key: 'ckeditor4', getter: () => CKEDITOR?.version, comment: 'CKEditor 4' },
+    { key: 'ckeditor5', getter: () => ClassicEditor?.builtinPlugins ? 'detected' : undefined, comment: 'CKEditor 5' },
+    { key: 'quill', getter: () => Quill?.version, comment: 'QuillJS' },
+
+    // Notificaciones
+    { key: 'sweetalert2', getter: () => Swal?.version, comment: 'SweetAlert2' },
+    { key: 'noty', getter: () => Noty?.version, comment: 'Noty' },
+
+    // Animación
+    { key: 'gsap', getter: () => gsap?.version, comment: 'GSAP' },
+    { key: 'anime', getter: () => anime?.version, comment: 'Anime.js' },
+
+    // Crypto
+    { key: 'forge', getter: () => forge?.version, comment: 'node-forge' },
+    { key: 'sjcl', getter: () => sjcl?.version, comment: 'SJCL' },
+    { key: 'jsencrypt', getter: () => window.JSEncrypt ? 'detected' : undefined, comment: 'JSEncrypt' },
+
+    // Widgets externos
+    { key: 'intercom', getter: () => window.Intercom ? 'detected' : undefined, comment: 'Intercom' },
+    { key: 'tawkto', getter: () => window.Tawk_API ? 'detected' : undefined, comment: 'Tawk.to' },
+
+    // Mapas
+    { key: 'google_maps', getter: () => window.google?.maps?.version, comment: 'Google Maps' },
+    { key: 'yandex_maps', getter: () => ymaps?.meta?.version, comment: 'Yandex Maps' },
+
+    // ML
+    { key: 'face_api', getter: () => faceapi?.version, comment: 'Face API' },
+
+  ].forEach(item => add(item.key, safe(item.getter), item.comment));
+
+  console.groupEnd();
+
+  // ======================================================
+  //  Firebase (v8 y v9+)
+  // ======================================================
+
+  console.groupCollapsed('%c🔥 Firebase', 'color:#ff9800;font-weight:bold');
+
+  add('firebase_sdk', safe(() => firebase?.SDK_VERSION), 'Firebase v8 SDK');
+  add('firebase_app', safe(() => firebase?.app?.().options?.appId), 'Firebase App ID');
+  add('firebase_modular', safe(() => window._firebaseApp || window.__firebaseDefaultApp ? 'detected' : undefined), 'Firebase modular detectado');
+  add('firestore', safe(() => firebase?.firestore ? 'detected' : undefined), 'Firestore');
+  add('firebase_auth', safe(() => firebase?.auth ? 'detected' : undefined), 'Firebase Auth');
+
+  console.groupEnd();
+
+  // ======================================================
+  //  Next.js (heurística)
+  // ======================================================
+
+  console.groupCollapsed('%c🔍 Next.js', 'color:#ff9800;font-weight:bold');
+
+  try {
+    const nextData = safe(() => __NEXT_DATA__);
+    if (nextData?.buildId) add('nextjs.buildId', nextData.buildId, 'Build ID');
+
+    const scripts = Array.from(document.querySelectorAll('script[src]'))
+      .map(s => s.src)
+      .filter(s => s.includes('/_next/static/'));
+
+    for (const src of scripts.slice(0, 10)) {
+      try {
+        const res = await fetch(src, { cache: 'no-store' });
+        const txt = await res.text();
+        const match = txt.match(/Next\.js v(\d+\.\d+\.\d+)/);
+        if (match) {
+          add('nextjs.version', match[1], 'Versión desde chunk');
+          break;
+        }
+      } catch {}
+    }
+  } catch {}
+  console.groupEnd();
+
+  // ======================================================
+  //  DETECCIÓN GENÉRICA: objetos globales con .version, .VERSION
+  // ======================================================
+
+  console.groupCollapsed('%c🔍 Globales con .version/.VERSION', 'color:#ff9800;font-weight:bold');
+
+  try {
+    const globals = Object.entries(window)
+      .filter(([name, v]) =>
+        v &&
+        typeof v === 'object' &&
+        (v.version || v.VERSION) &&
+        !name.startsWith('_') &&
+        name.length < 40
+      )
+      .slice(0, 80);
+
+    for (const [name, obj] of globals) {
+      add(`global.${name}`, obj.version || obj.VERSION, `Global versionado "${name}"`);
+    }
+
+  } catch {}
+  console.groupEnd();
+
+  // ======================================================
+  //  SALIDA FINAL
+  // ======================================================
+
+  console.log('%c===== JSON consolidado =====', 'color:#4caf50;font-weight:bold');
+  console.log(JSON.stringify(results, null, 2));
+
+  console.log('%c===== Tabla =====', 'color:#4caf50;font-weight:bold');
+  console.table(
+    Object.entries(results).map(([k, v]) => ({ key: k, version: v }))
+  );
+
+  window.__versionsInventory = results;
+
+  try {
+    await navigator.clipboard.writeText(JSON.stringify(results, null, 2));
+    console.info('✔ JSON copiado al portapapeles.');
+  } catch {
+    console.info('✘ No se pudo copiar automáticamente. Usá window.__versionsInventory.');
+  }
+
+})();
